@@ -10,8 +10,9 @@ qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(${PROJECT_NAME}
         cxx-src/main.cpp
-        cxx-src/SerialManager.cpp
-        # cxx-src/i2cm.c
+        cxx-src/ft4222.cpp
+        cxx-src/ssd1306/ssd1306.cpp
+        cxx-src/ssd1306/fonts.c
 )
 
 qt_add_qml_module(${PROJECT_NAME}
@@ -21,8 +22,11 @@ qt_add_qml_module(${PROJECT_NAME}
         qml-src/Main.qml
 )
 
+include_directories(cxx-src)
+include_directories(cxx-src/ssd1306)
+
 include_directories(/usr/local/include)   # libft4222.h
-# link_directories(/usr/local/lib)          # libft4222.so
+link_directories(/usr/local/lib)          # libft4222.so
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt6::Quick
