@@ -194,8 +194,8 @@ FTDevice::~FTDevice() {
  * @throw FtException При ошибке открытия
  * @throw std::runtime_error Если устройство не FT4222
  *
- * Выполняет полное открытие устройства: получение хэндла,
- * проверка типа устройства, получение информации о версии.
+ * @note Выполняет полное открытие устройства: получение хэндла,
+ *       проверка типа устройства, получение информации о версии.
  */
 void FTDevice::open(uint32_t index) {
     if (!pimpl) pimpl = new Impl(); // Создаем Impl, если еще не создан
@@ -323,10 +323,10 @@ bool FTDevice::isOpen() const noexcept {
  * @param speed Скорость шины I2C
  * @throw std::runtime_error Если устройство не открыто или ошибка инициализации
  *
- * Устанавливает устройство в режим I2C ведущего с указанной скоростью.
- * После инициализации можно выполнять операции чтения/записи на шине I2C.
+ * @note  Устанавливает устройство в режим I2C ведущего с указанной скоростью.
+ *        После инициализации можно выполнять операции чтения/записи на шине I2C.
  */
-void FTDevice::initI2CMaster(I2CSpeed speed) {
+void FTDevice::initI2CMaster(I2CSpeed speed) const {
     if (!isOpen()) throw std::runtime_error("Device not open");
 
     std::lock_guard<std::mutex> lock(pimpl->deviceMutex);
@@ -350,11 +350,11 @@ void FTDevice::initI2CMaster(I2CSpeed speed) {
  * @param flag Флаги транзакции
  * @throw std::runtime_error При ошибках устройства или неполной передаче
  *
- * Выполняет запись данных на шину I2C с указанным адресом устройства.
- * Флаг определяет условия начала/окончания транзакции.
+ * @note  Выполняет запись данных на шину I2C с указанным адресом устройства.
+ *        Флаг определяет условия начала/окончания транзакции.
  */
 void FTDevice::i2cMasterWrite(uint8_t deviceAddress, const std::vector<uint8_t> &data,
-                              uint8_t flag) {
+                              uint8_t flag) const {
     if (!isOpen()) throw std::runtime_error("Device not open");
     if (pimpl->currentMode != Mode::I2C_Master) {
         throw std::runtime_error("Device not in I2C Master mode");
@@ -399,8 +399,8 @@ void FTDevice::i2cMasterWrite(uint8_t deviceAddress, const std::vector<uint8_t> 
  * @return Вектор прочитанных данных
  * @throw std::runtime_error При ошибках устройства
  *
- * Выполняет чтение данных с шины I2C с указанного устройства.
- * Возвращает фактически прочитанные данные (может быть меньше запрошенного).
+ * @note Выполняет чтение данных с шины I2C с указанного устройства.
+ *       Возвращает фактически прочитанные данные (может быть меньше запрошенного).
  */
 std::vector<uint8_t> FTDevice::i2cMasterRead(uint8_t deviceAddress, size_t bytesToRead,
                                              uint8_t flag) {
@@ -417,12 +417,12 @@ std::vector<uint8_t> FTDevice::i2cMasterRead(uint8_t deviceAddress, size_t bytes
     uint16 bytesRead = 0;
 
     // Выполняем чтение с шины I2C
-    FT4222_STATUS status = FT4222_I2CMaster_ReadEx(pimpl->ftHandle,
-                                                   deviceAddress,
-                                                   flag,
-                                                   buffer.data(),
-                                                   static_cast<uint16>(bytesToRead),
-                                                   &bytesRead);
+    const FT4222_STATUS status = FT4222_I2CMaster_ReadEx(pimpl->ftHandle,
+                                                         deviceAddress,
+                                                         flag,
+                                                         buffer.data(),
+                                                         static_cast<uint16>(bytesToRead),
+                                                         &bytesRead);
 
     checkFT4222Status(status, "FT4222_I2CMaster_ReadEx");
 
@@ -544,7 +544,8 @@ std::vector<uint8_t> FTDevice::scanI2CBus(uint8_t startAddress,
                 oss << "I2C ACK @ 0x" << std::hex << static_cast<int>(addr);
                 log(oss.str());
             }
-        } else if (m_logger) {
+        }
+        else if (m_logger) {
             std::ostringstream oss;
             oss << "I2C NACK @ 0x" << std::hex << static_cast<int>(addr)
                 << " ctrl=0x" << static_cast<int>(controllerStatus);

@@ -211,7 +211,7 @@ public:
      * @throw std::runtime_error Если устройство не открыто
      * @throw std::runtime_error При ошибке инициализации
      */
-    void initI2CMaster(I2CSpeed speed = I2CSpeed::S400K);
+    void initI2CMaster(I2CSpeed speed = I2CSpeed::S400K) const;
 
     /**
      * @brief Записать данные на шину I2C
@@ -222,7 +222,7 @@ public:
      * @throw std::runtime_error При ошибке записи или неполной передаче
      */
     void i2cMasterWrite(uint8_t deviceAddress, const std::vector<uint8_t> &data,
-                        uint8_t flag = 0x02);
+                        uint8_t flag = 0x02) const;
 
     /**
      * @brief Прочитать данные с шины I2C

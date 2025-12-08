@@ -11,6 +11,7 @@ qt_standard_project_setup(REQUIRES 6.10)
 qt_add_executable(${PROJECT_NAME}
         cxx-src/main.cpp
         cxx-src/ft4222.cpp
+        cxx-src/i2cscanner.cpp
         cxx-src/ssd1306/ssd1306.cpp
         cxx-src/ssd1306/fonts.c
 )
@@ -20,6 +21,7 @@ qt_add_qml_module(${PROJECT_NAME}
         VERSION 1.0
         QML_FILES
         qml-src/Main.qml
+        qml-src/SI7210Window.qml
 )
 
 include_directories(cxx-src)
