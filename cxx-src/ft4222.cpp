@@ -486,6 +486,76 @@ void FTDevice::i2cMasterResetBus() {
     log("I2C bus reset");
 }
 
+/**
+ * @brief Просканировать шину I2C и вернуть список ответивших устройств
+ */
+std::vector<uint8_t> FTDevice::scanI2CBus(uint8_t startAddress,
+                                          uint8_t endAddress,
+                                          uint8_t flag) const {
+    if (!isOpen()) throw std::runtime_error("Device not open");
+    if (pimpl->currentMode != Mode::I2C_Master) {
+        throw std::runtime_error("Device not in I2C Master mode");
+    }
+
+    if (startAddress > endAddress) std::swap(startAddress, endAddress);
+
+    std::vector<uint8_t> found;
+
+    std::lock_guard<std::mutex> lock(pimpl->deviceMutex);
+
+    for (uint16_t addr = startAddress; addr <= endAddress; ++addr) {
+        uint8_t dummy = 0;
+        uint16 bytesRead = 0;
+        uint8 controllerStatus = 0;
+
+        // Читаем 1 байт, чтобы гарантированно отправить START+ADDR и получить статус контроллера
+        FT4222_STATUS status = FT4222_I2CMaster_ReadEx(pimpl->ftHandle,
+                                                       static_cast<uint8>(addr),
+                                                       flag,
+                                                       &dummy,
+                                                       1,
+                                                       &bytesRead);
+
+        if (status != FT4222_OK) {
+            std::ostringstream oss;
+            oss << "I2C scan status @0x" << std::hex << static_cast<int>(addr)
+                << " status=" << std::dec << status;
+            log(oss.str());
+            continue;
+        }
+
+        // Проверяем флаги контроллера: если адрес или данные не подтверждены, считаем что устройства нет
+        status = FT4222_I2CMaster_GetStatus(pimpl->ftHandle, &controllerStatus);
+        if (status != FT4222_OK) {
+            std::ostringstream oss;
+            oss << "I2C get status failed @0x" << std::hex << static_cast<int>(addr)
+                << " status=" << std::dec << status;
+            log(oss.str());
+            continue;
+        }
+
+        const bool addrNack = I2CM_ADDRESS_NACK(controllerStatus);
+        const bool dataNack = I2CM_DATA_NACK(controllerStatus);
+
+        if (!addrNack && !dataNack) {
+            found.push_back(static_cast<uint8_t>(addr));
+            if (m_logger) {
+                std::ostringstream oss;
+                oss << "I2C ACK @ 0x" << std::hex << static_cast<int>(addr);
+                log(oss.str());
+            }
+        } else if (m_logger) {
+            std::ostringstream oss;
+            oss << "I2C NACK @ 0x" << std::hex << static_cast<int>(addr)
+                << " ctrl=0x" << static_cast<int>(controllerStatus);
+            log(oss.str());
+        }
+    }
+
+    log("I2C scan finished, found " + std::to_string(found.size()) + " device(s)");
+    return found;
+}
+
 // SPI Master функции
 
 /**
