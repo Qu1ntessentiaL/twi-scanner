@@ -3,17 +3,17 @@
 #include <QQmlContext>
 #include <iostream>
 
-#include "i2cscanner.hpp"
+#include "rtccontroller.hpp"
 
 int main(int argc, char *argv[]) {
-    std::cout << "I2C scanner GUI" << std::endl;
+    std::cout << "RTC I2C GUI" << std::endl;
 
     QGuiApplication app(argc, argv);
 
-    I2CScanner scanner;
+    RTCController controller;
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("i2cScanner", &scanner);
+    engine.rootContext()->setContextProperty("rtcController", &controller);
 
     QObject::connect(
         &engine,
